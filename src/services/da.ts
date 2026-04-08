@@ -1,10 +1,22 @@
 import { publicKey } from "@waves/ts-lib-crypto";
 import { buildInvokeViaDA } from "waves-da-sdk";
 import { config } from "../config";
+import { getMethodConfig } from "../dappConfig";
 import type { InvokeRequest } from "../types";
 
 export async function buildDaInvokeTx(input: InvokeRequest) {
+  const methodCfg = getMethodConfig(input.targetDapp, input.function);
+  if (!methodCfg) {
+    throw new Error(
+      `dApp "${input.targetDapp}" or method "${input.function}" is not whitelisted in relayer config`
+    );
+  }
+
+  const useOrigin = methodCfg.useOrigin;
   const relayerPubKey = publicKey(config.relayerSeed);
+
+  // Policy from dappConfig only — clients cannot choose (would let a malicious client skip DA fee refund).
+  const reimburseFee = !methodCfg.useOrigin && !methodCfg.sponsorFee;
 
   const tx = await buildInvokeViaDA(
     config.nodeUrl,
@@ -12,7 +24,7 @@ export async function buildDaInvokeTx(input: InvokeRequest) {
       chainId: config.chainId,
       registry: config.registryAddress,
       eoa: input.eoa,
-      useOrigin: input.useOrigin,
+      useOrigin,
       feeRegular: config.feeRegular,
       feeVerifier: config.feeVerifier,
     },
@@ -20,15 +32,15 @@ export async function buildDaInvokeTx(input: InvokeRequest) {
       targetDapp: input.targetDapp,
       function: input.function,
       args: input.args,
-      reimburseFee: input.reimburseFee ?? false,
+      reimburseFee,
       payments: input.payments ?? [],
-      relayerPubKeyBase58: input.useOrigin ? relayerPubKey : "",
+      relayerPubKeyBase58: useOrigin ? relayerPubKey : "",
     },
     config.relayerSeed
   );
 
   return {
     tx,
-    mode: input.useOrigin ? "verifier" : "regular" as const,
+    mode: (useOrigin ? "verifier" : "regular") as "verifier" | "regular",
   };
 }
