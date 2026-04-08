@@ -9,6 +9,9 @@ import { ChallengeRequestSchema, AuthVerifyRequestSchema } from "../schemas/auth
 import { ErrorCode, makeError } from "../errors";
 import { config } from "../config";
 
+// Re-export verifyToken for use in middleware
+export { verifyToken };
+
 /**
  * In-memory challenge store (use Redis in production)
  * Maps: nonce -> { eoa, expiresAt }
