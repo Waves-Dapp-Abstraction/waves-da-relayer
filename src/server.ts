@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import { publicKey, address } from "@waves/ts-lib-crypto";
 import { config } from "./config";
 import { registerInvokeRoute } from "./routes/invoke";
@@ -6,6 +7,11 @@ import { registerAuthRoutes } from "./routes/auth";
 import { ErrorCode, makeError } from "./errors";
 
 const app = Fastify({ logger: true });
+
+// --- CORS ---
+await app.register(cors, {
+  origin: true, // Allow all origins (change to specific URLs in production)
+});
 
 // --- Global error handler ---
 // Catches unhandled errors and Fastify's own parse/validation errors (e.g. malformed JSON)

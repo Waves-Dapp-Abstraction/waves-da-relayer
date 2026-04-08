@@ -9,6 +9,7 @@
     "test:watch": "mocha --watch"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@waves/ts-lib-crypto": "^1.4.3",
     "@waves/waves-transactions": "^4.0.6",
     "dotenv": "^16.4.5",
