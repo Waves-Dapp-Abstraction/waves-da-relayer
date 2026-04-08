@@ -70,14 +70,46 @@ Detailed fee/refund semantics: **[`FEE_AND_REFUND.md`](FEE_AND_REFUND.md)**.
 
 **All protected endpoints require an `Authorization: Bearer {token}` header.**
 
-The relayer authenticates EOAs via a challenge-response flow:
+The relayer authenticates EOAs via a challenge-response flow. **Use the SDK client for seamless auth:**
+
+```ts
+import { RelayerAuthClient, RelayerSession } from "waves-da-sdk";
+import { Signer } from "@waves/signer";
+import { ProviderKeeper } from "@waves/provider-keeper";
+
+const signer = new Signer({ NODE_URL: "https://nodes-testnet.wavesnodes.com" });
+signer.setProvider(new ProviderKeeper());
+
+const authClient = new RelayerAuthClient("http://localhost:3000");
+const session = new RelayerSession();
+
+// One call: login + authenticate (token cached for reuse)
+const auth = await authClient.loginAndAuthenticate(signer, session);
+
+// Use token in all requests
+const res = await fetch("http://localhost:3000/invoke", {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${auth.token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    eoa: auth.eoa,
+    targetDapp: "3P...",
+    function: "myMethod",
+    args: [],
+  }),
+});
+```
+
+**Manual flow** (if you prefer step-by-step control):
 
 1. **Client**: `GET /auth/challenge/{eoa}` → receive nonce
-2. **Client**: Sign nonce with Keeper
+2. **Client**: Sign nonce with wallet
 3. **Client**: `POST /auth/verify` with signature → receive JWT token
 4. **Client**: Include token in all `/invoke` requests
 
-**Full details:** [`AUTH.md`](AUTH.md) and [`../sdk/examples/authFlow.ts`](../sdk/examples/authFlow.ts)
+**Full details:** [`AUTH.md`](AUTH.md) and [`../sdk/README.md`](../sdk/README.md#relayer-authentication)
 
 ---
 
