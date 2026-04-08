@@ -177,11 +177,87 @@ main();
 
 Challenges cannot be reused (one-time use). If a challenge expires, request a new one.
 
+## Generating JWT_SECRET
+
+The `JWT_SECRET` is the cryptographic key used to sign and verify JWT tokens. It must be:
+- **Strong**: random, not guessable
+- **Unique**: different for each deployment
+- **Secret**: never committed to git, never shared
+
+### For Development (Local/Testnet)
+
+You can use the example value from `.env.example`:
+
+```
+JWT_SECRET=your-super-secret-key-change-in-production
+```
+
+This is fine for development but will show a warning in logs. Upgrade to a real secret when ready.
+
+### For Production (Mainnet)
+
+Generate a strong random 32-character hexadecimal string:
+
+**Linux / macOS:**
+
+```bash
+openssl rand -hex 32
+```
+
+Example output:
+```
+f3a8c2e1d9b7a4f6c8e2d1a3f5b7c9e1d4a2b5c6e8f0a1b3c5d7e9f1a3b5c
+```
+
+**Windows PowerShell:**
+
+```powershell
+[Convert]::ToHexString((Get-Random -Count 32 -InputObject (0..255)))
+```
+
+**Online generator (if you don't have command line tools):**
+
+Visit https://www.random.org/strings/ and configure:
+- Number of strings: 1
+- Length of each string: 64 (for 32 bytes in hex)
+- Format: Hexadecimal
+
+### Setup
+
+Once you have your secret:
+
+```bash
+# Create .env (never commit this!)
+cp .env.example .env
+
+# Edit .env and set your JWT_SECRET:
+JWT_SECRET=f3a8c2e1d9b7a4f6c8e2d1a3f5b7c9e1d4a2b5c6e8f0a1b3c5d7e9f1a3b5c
+
+# Start the relayer
+npm start
+```
+
+### Security Checklist
+
+✅ Secret is **random** and unique  
+✅ Secret is **at least 32 characters** long  
+✅ Secret is **never committed** to git (`.env` in `.gitignore`)  
+✅ Secret is **different** for dev/testnet/mainnet  
+✅ Secret is **rotated** if compromise is suspected  
+✅ HTTPS is **enforced** in production  
+
+### Changing the Secret
+
+If you rotate the secret:
+- **All existing tokens become invalid** (users need to re-authenticate)
+- This is a **security feature**, not a bug
+- Plan rotations during maintenance windows if possible
+
 ## Security Notes
 
 - **Never share your private key or seed** — signing happens in Keeper, not the relayer
 - **Use HTTPS in production** — tokens and messages should only travel over encrypted connections
-- **JWT_SECRET must be strong** — Set `JWT_SECRET` in `.env` to a random 32+ character string in production
+- **JWT_SECRET must be strong** — Generate using the methods above, never use predictable values
 - **Signature verification is cryptographic** — The relayer verifies that the signature matches the claimed public key and EOA address on the Waves blockchain
 
 ## Opt-out (Development Only)
