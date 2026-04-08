@@ -4,7 +4,7 @@
 
  *
 
- * - `useOrigin` — false = REGULAR (relayer sends tx; optional fee refund to relayer).
+ * - `useVerifierMode` — false = REGULAR (relayer sends tx; optional fee refund to relayer).
 
  *   true = VERIFIER (DA sends; `sponsorFee` must not be true).
 
@@ -18,7 +18,7 @@
 
 export type MethodConfig = {
 
-  useOrigin: boolean;
+  useVerifierMode: boolean;
 
   sponsorFee: boolean;
 

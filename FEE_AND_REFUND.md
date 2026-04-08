@@ -6,10 +6,10 @@ Each whitelisted method has:
 
 | Field | Meaning |
 |--------|--------|
-| `useOrigin` | `false` = REGULAR (relayer is `i.caller` on the DA). `true` = VERIFIER (DA is sender; correct `originCaller` on targets). |
-| `sponsorFee` | Only meaningful when `useOrigin` is `false`. If `true`, the relayer accepts paying the network fee with no on-chain refund from the DA (no refund guard). If `false` (default), the relayer sets **`reimburseFee: true`** on the built `proxy` tx and runs the refund guard (unless disabled). HTTP clients do not send `reimburseFee`. |
+| `useVerifierMode` | `false` = REGULAR (relayer is `i.caller` on the DA). `true` = VERIFIER (DA is sender; correct `originCaller` on targets). |
+| `sponsorFee` | Only meaningful when `useVerifierMode` is `false`. If `true`, the relayer accepts paying the network fee with no on-chain refund from the DA (no refund guard). If `false` (default), the relayer sets **`reimburseFee: true`** on the built `proxy` tx and runs the refund guard (unless disabled). HTTP clients do not send `reimburseFee`. |
 
-`sponsorFee: true` is **invalid** when `useOrigin: true` (VERIFIER): the DA pays the transaction fee; relayer “sponsorship” does not apply.
+`sponsorFee: true` is **invalid** when `useVerifierMode: true` (VERIFIER): the DA pays the transaction fee; relayer “sponsorship” does not apply.
 
 ## Refund guard
 

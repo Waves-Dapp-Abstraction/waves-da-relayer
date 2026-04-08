@@ -12,11 +12,11 @@ export async function buildDaInvokeTx(input: InvokeRequest) {
     );
   }
 
-  const useOrigin = methodCfg.useOrigin;
+  const useVerifierMode = methodCfg.useVerifierMode;
   const relayerPubKey = publicKey(config.relayerSeed);
 
   // Policy from dappConfig only — clients cannot choose (would let a malicious client skip DA fee refund).
-  const reimburseFee = !methodCfg.useOrigin && !methodCfg.sponsorFee;
+  const reimburseFee = !methodCfg.useVerifierMode && !methodCfg.sponsorFee;
 
   const tx = await buildInvokeViaDA(
     config.nodeUrl,
@@ -24,7 +24,7 @@ export async function buildDaInvokeTx(input: InvokeRequest) {
       chainId: config.chainId,
       registry: config.registryAddress,
       eoa: input.eoa,
-      useOrigin,
+      useVerifierMode,
       feeRegular: config.feeRegular,
       feeVerifier: config.feeVerifier,
     },
@@ -34,13 +34,13 @@ export async function buildDaInvokeTx(input: InvokeRequest) {
       args: input.args,
       reimburseFee,
       payments: input.payments ?? [],
-      relayerPubKeyBase58: useOrigin ? relayerPubKey : "",
+      relayerPubKeyBase58: useVerifierMode ? relayerPubKey : "",
     },
     config.relayerSeed
   );
 
   return {
     tx,
-    mode: (useOrigin ? "verifier" : "regular") as "verifier" | "regular",
+    mode: (useVerifierMode ? "verifier" : "regular") as "verifier" | "regular",
   };
 }

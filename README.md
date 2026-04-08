@@ -50,17 +50,17 @@ Shape:
 ```json
 {
   "3N5peeTj1jpFnBMtvTzGjDRvb3GJ99CEUnX": {
-    "recordIntStrBool": { "useOrigin": false, "sponsorFee": false }
+    "recordIntStrBool": { "useVerifierMode": false, "sponsorFee": false }
   }
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `useOrigin` | boolean | `false` → **REGULAR**. `true` → **VERIFIER** (correct `originCaller` on targets; DA pays fee). |
-| `sponsorFee` | boolean | Only for REGULAR (`useOrigin: false`). `true` = relayer pays network fee, no refund-from-DA requirement. `false` = relayer sets `reimburseFee: true` on the built tx; refund guard may apply. **Invalid** if `useOrigin` is `true`. |
+| `useVerifierMode` | boolean | `false` → **REGULAR**. `true` → **VERIFIER** (correct `originCaller` on targets; DA pays fee). |
+| `sponsorFee` | boolean | Only for REGULAR (`useVerifierMode: false`). `true` = relayer pays network fee, no refund-from-DA requirement. `false` = relayer sets `reimburseFee: true` on the built tx; refund guard may apply. **Invalid** if `useVerifierMode` is `true`. |
 
-Only `useOrigin` and `sponsorFee` are allowed per method. Invalid combinations or unknown keys cause a **startup error**.
+Only `useVerifierMode` and `sponsorFee` are allowed per method. Invalid combinations or unknown keys cause a **startup error**.
 
 Detailed fee/refund semantics: **[`FEE_AND_REFUND.md`](FEE_AND_REFUND.md)**.
 

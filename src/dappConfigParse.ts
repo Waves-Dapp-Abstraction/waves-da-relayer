@@ -6,7 +6,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 
 /**
  * Parse and validate `dappConfig.json` structure. No I/O.
- * @throws if `useOrigin===true` and `sponsorFee===true`, or on invalid shape.
+ * @throws if `useVerifierMode===true` and `sponsorFee===true`, or on invalid shape.
  */
 export function parseDappConfig(raw: unknown): DappConfig {
   if (!isPlainObject(raw)) {
@@ -27,9 +27,9 @@ export function parseDappConfig(raw: unknown): DappConfig {
         throw new Error(`dappConfig["${dappAddr}"]["${methodName}"] must be an object`);
       }
 
-      if (typeof methodVal.useOrigin !== "boolean") {
+      if (typeof methodVal.useVerifierMode !== "boolean") {
         throw new Error(
-          `dappConfig["${dappAddr}"]["${methodName}"].useOrigin must be a boolean`
+          `dappConfig["${dappAddr}"]["${methodName}"].useVerifierMode must be a boolean`
         );
       }
 
@@ -43,14 +43,14 @@ export function parseDappConfig(raw: unknown): DappConfig {
         sponsorFee = methodVal.sponsorFee;
       }
 
-      if (methodVal.useOrigin && sponsorFee) {
+      if (methodVal.useVerifierMode && sponsorFee) {
         throw new Error(
-          `dappConfig["${dappAddr}"]["${methodName}"]: sponsorFee cannot be true when useOrigin is true (VERIFIER mode; DA pays the fee — relayer sponsorship does not apply)`
+          `dappConfig["${dappAddr}"]["${methodName}"]: sponsorFee cannot be true when useVerifierMode is true (VERIFIER mode; DA pays the fee — relayer sponsorship does not apply)`
         );
       }
 
       const extraKeys = Object.keys(methodVal).filter(
-        (k) => k !== "useOrigin" && k !== "sponsorFee"
+        (k) => k !== "useVerifierMode" && k !== "sponsorFee"
       );
       if (extraKeys.length > 0) {
         throw new Error(
@@ -58,7 +58,7 @@ export function parseDappConfig(raw: unknown): DappConfig {
         );
       }
 
-      methods[methodName] = { useOrigin: methodVal.useOrigin, sponsorFee };
+      methods[methodName] = { useVerifierMode: methodVal.useVerifierMode, sponsorFee };
     }
 
     out[dappAddr] = methods;
