@@ -22,6 +22,14 @@ cd relayer
 npm install
 ```
 
+**Monorepo:** the relayer depends on **`waves-da-sdk`** via `file:../sdk` (see `package.json`). After you change SDK **source** (`sdk/src/`), rebuild the package and refresh the dependency so the relayer loads the updated `dist/`:
+
+```bash
+cd ../sdk && npm run build && cd ../relayer && npm install
+```
+
+If this step is skipped, behaviour can diverge from `dappConfig.json` (for example **VERIFIER** mode may not set `senderPublicKey` to the DA, because an outdated bundle might still expect the old `useOrigin` parameter name).
+
 ### Environment (`.env`)
 
 Copy `relayer/.env.example` to `.env` and set:
