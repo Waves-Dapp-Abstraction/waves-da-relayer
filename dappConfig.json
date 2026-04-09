@@ -1,5 +1,5 @@
 {
   "3N5peeTj1jpFnBMtvTzGjDRvb3GJ99CEUnX": {
-    "recordIntStrBool": { "useVerifierMode": false, "sponsorFee": false }
+    "recordIntStrBool": { "useVerifierMode": true, "sponsorFee": false }
   }
 }
