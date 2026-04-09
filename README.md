@@ -22,13 +22,6 @@ cd relayer
 npm install
 ```
 
-**Monorepo:** the relayer depends on **`waves-da-sdk`** via `file:../sdk` (see `package.json`). After you change SDK **source** (`sdk/src/`), rebuild the package and refresh the dependency so the relayer loads the updated `dist/`:
-
-```bash
-cd ../sdk && npm run build && cd ../relayer && npm install
-```
-
-If this step is skipped, behaviour can diverge from `dappConfig.json` (for example **VERIFIER** mode may not set `senderPublicKey` to the DA, because an outdated bundle might still expect the old `useOrigin` parameter name).
 
 ### Environment (`.env`)
 
@@ -117,7 +110,7 @@ const res = await fetch("http://localhost:3000/invoke", {
 3. **Client**: `POST /auth/verify` with signature → receive JWT token
 4. **Client**: Include token in all `/invoke` requests
 
-**Full details:** [`AUTH.md`](AUTH.md) and [`../sdk/README.md`](../sdk/README.md#relayer-authentication)
+**Full details:** [`AUTH.md`](AUTH.md)
 
 ---
 
@@ -251,7 +244,7 @@ Content-Type: application/json
 | `args` | array | No | Arguments: numbers, strings, or booleans only (default `[]`). For binary args, use the SDK directly. |
 | `payments` | array | No | `{ "amount": number, "assetId"?: string }`, max **2** entries |
 
-The relayer does **not** accept a client-controlled execution mode or fee-refund flag: **`useOrigin` / `sponsorFee` (and thus `reimburseFee` on the built tx) come only from `dappConfig.json`.** A legacy `reimburseFee` field in JSON, if present, is **stripped** and ignored.
+The relayer does **not** accept client-controlled execution mode or fee settings: **`useVerifierMode` and `sponsorFee` come only from `dappConfig.json`.**
 
 **Success response 200**
 
@@ -290,37 +283,36 @@ Example auth error:
 }
 ```
 
-#### Example: Complete flow with `curl`
+#### Example: Call a dApp via `/invoke` (JavaScript)
 
-```bash
-# 1. Get challenge
-curl -s http://localhost:3000/auth/challenge/3N... | jq '.message' > message.txt
-MESSAGE=$(cat message.txt)
+```js
+// After authentication (use RelayerAuthClient from SDK for seamless login)
+const token = auth.token;
+const eoa = auth.eoa;
 
-# 2. Sign with Keeper (in your app via @waves/signer)
-# SIGNATURE=$(signer.signMessage(MESSAGE))
-# For now, assume you got: SIGNATURE="base58Sig..."
+// Call a dApp method via the relayer
+const response = await fetch("http://localhost:3000/invoke", {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    eoa: eoa,
+    targetDapp: "3N5peeTj1jpFnBMtvTzGjDRvb3GJ99CEUnX",
+    function: "recordIntStrBool",
+    args: [1, "hello", true],
+    payments: []
+  }),
+});
 
-# 3. Verify and get token
-TOKEN=$(curl -s -X POST http://localhost:3000/auth/verify \
-  -H "Content-Type: application/json" \
-  -d '{
-    "eoa": "3N...",
-    "publicKey": "base58PubKey...",
-    "message": '"$MESSAGE"',
-    "signature": "base58Sig..."
-  }' | jq -r '.token')
-
-# 4. Use token in invoke
-curl -s -X POST http://localhost:3000/invoke \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "eoa": "3N...",
-    "targetDapp": "3N5peeTj1jpFnBMtvTzGjDRvb3GJ99CEUnX",
-    "function": "recordIntStrBool",
-    "args": [1, "hello", true]
-  }'
+const result = await response.json();
+if (result.ok) {
+  console.log("Transaction ID:", result.txId);
+  console.log("Mode:", result.mode); // "regular" or "verifier"
+} else {
+  console.error("Error:", result.code, result.error);
+}
 ```
 
 Replace addresses and method names with values present in your `dappConfig.json` and on-chain permissions.
@@ -359,9 +351,6 @@ Logs include `RELAYER_ADDRESS` and `RELAYER_PUBKEY` at startup (for allowlisting
 ## See also
 
 - [`AUTH.md`](AUTH.md) — detailed authentication and challenge-response flow
-- [`../docs/REGISTRY.md`](../docs/REGISTRY.md) — canonical `REGISTRY_ADDRESS` (one per network)
-- [`../docs/QUICKSTART.md`](../docs/QUICKSTART.md) — minimal setup + front `fetch` snippet
-- [`../docs/SPEC.md`](../docs/SPEC.md) — protocol specification
-- [`../docs/INTEGRATION.md`](../docs/INTEGRATION.md) — dApp integration guide
-- [`../sdk/README.md`](../sdk/README.md) — SDK used internally + `RelayerAuthClient`
 - [`FEE_AND_REFUND.md`](FEE_AND_REFUND.md) — `sponsorFee` and refund guard
+- [waves-da-sdk](https://www.npmjs.com/package/waves-da-sdk) — SDK for client-side integration
+- [Waves DA Documentation](https://waves-da.com/docs) — full integration and protocol guides
