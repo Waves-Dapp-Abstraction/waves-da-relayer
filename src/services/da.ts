@@ -1,35 +1,51 @@
 import { publicKey } from "@waves/ts-lib-crypto";
 import { buildInvokeViaDA } from "waves-da-sdk";
+import type { ProxyArg, ScalarArg } from "waves-da-sdk";
 import { config } from "../config";
 import { getMethodConfig } from "../dappConfig";
 import type { InvokeRequestParsed } from "../schemas/invokeSchema";
 
 /**
- * Convert args from JSON format to SDK format
- * - { binary: "base64string" } → Uint8Array
+ * Convert a base64 string from the HTTP API into a Uint8Array for the SDK.
+ */
+function base64ToUint8Array(b64: string): Uint8Array {
+  if (typeof Buffer !== "undefined") {
+    return new Uint8Array(Buffer.from(b64, "base64"));
+  }
+  const binaryStr = atob(b64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/**
+ * Convert a single scalar arg from JSON wire format to SDK format:
+ *   { binary: "base64..." } → Uint8Array
+ *   number | string | boolean → pass through
+ */
+function convertScalar(arg: number | string | boolean | { binary: string }): ScalarArg {
+  if (typeof arg === "object" && "binary" in arg) {
+    return base64ToUint8Array(arg.binary);
+  }
+  return arg;
+}
+
+/**
+ * Convert all args from JSON wire format to SDK format.
+ *   { binary: "base64..." }  → Uint8Array           (ByteVector)
+ *   { list: [...scalars] }   → ScalarArg[]           (List)
+ *   number | string | boolean → pass through
  */
 function processArgs(
-  args: Array<number | string | boolean | { binary: string }>
-): Array<number | string | boolean | Uint8Array> {
+  args: Array<number | string | boolean | { binary: string } | { list: Array<number | string | boolean | { binary: string }> }>
+): ProxyArg[] {
   return args.map((arg) => {
-    if (arg === null || arg === undefined) {
-      throw new Error("Null or undefined arguments not supported");
+    if (typeof arg === "object" && "list" in arg) {
+      return arg.list.map(convertScalar);
     }
-    if (typeof arg === "object" && "binary" in arg) {
-      // Convert base64 to Uint8Array
-      const base64Str = arg.binary;
-      if (typeof Buffer !== "undefined") {
-        return new Uint8Array(Buffer.from(base64Str, "base64"));
-      }
-      // Browser fallback
-      const binaryStr = atob(base64Str);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i);
-      }
-      return bytes;
-    }
-    return arg;
+    return convertScalar(arg as number | string | boolean | { binary: string });
   });
 }
 
@@ -47,7 +63,6 @@ export async function buildDaInvokeTx(input: InvokeRequestParsed) {
   // Policy from dappConfig only — clients cannot choose (would let a malicious client skip DA fee refund).
   const reimburseFee = !methodCfg.useVerifierMode && !methodCfg.sponsorFee;
 
-  // Convert binary args from JSON format to SDK format
   const processedArgs = processArgs(input.args);
 
   const tx = await buildInvokeViaDA(

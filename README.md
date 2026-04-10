@@ -241,8 +241,22 @@ Content-Type: application/json
 | `eoa` | string | Yes | User address (base58); must match the `eoa` in the token |
 | `targetDapp` | string | Yes | Target dApp address (must appear in `dappConfig.json`) |
 | `function` | string | Yes | Callable name (must be whitelisted for that dApp) |
-| `args` | array | No | Arguments: numbers, strings, booleans, or binary data (default `[]`). Binary data must be encoded as `{ "binary": "base64encodeddata" }`. Example: `[1, "hello", true, { "binary": "SGVsbG8gV29ybGQ=" }]` |
+| `args` | array | No | All Waves callable arg types are supported (default `[]`). See arg encoding table below. |
 | `payments` | array | No | `{ "amount": number, "assetId"?: string }`, max **2** entries |
+
+**Arg encoding**
+
+All Waves callable argument types are supported:
+
+| Waves type | JSON encoding | Example |
+|------------|--------------|---------|
+| `Int` | `number` | `42` |
+| `String` | `string` | `"hello"` |
+| `Boolean` | `boolean` | `true` |
+| `ByteVector` | `{ "binary": "base64string" }` | `{ "binary": "AQID" }` |
+| `List[...]` | `{ "list": [...scalars] }` | `{ "list": ["a", "b"] }` |
+
+List elements can be any scalar type (Int, String, Boolean, ByteVector). Nested lists are not allowed by the Waves protocol.
 
 The relayer does **not** accept client-controlled execution mode or fee settings: **`useVerifierMode` and `sponsorFee` come only from `dappConfig.json`.**
 
@@ -315,14 +329,15 @@ if (result.ok) {
 }
 ```
 
-#### Example: With binary arguments
-
-For methods that require binary data (e.g., hashes, keys, signatures), encode the data as base64:
+#### Example: With binary and list arguments
 
 ```js
-// Example: calling a function that expects (int, string, bytes)
+// ByteVector: encode as base64
 const binaryData = new Uint8Array([1, 2, 3, 4, 5]);
 const base64Binary = Buffer.from(binaryData).toString("base64");
+
+// List[String]: encode as { list: [...] }
+const tags = ["nft", "art", "rare"];
 
 const response = await fetch("http://localhost:3000/invoke", {
   method: "POST",
@@ -333,11 +348,22 @@ const response = await fetch("http://localhost:3000/invoke", {
   body: JSON.stringify({
     eoa: eoa,
     targetDapp: "3N5peeTj1jpFnBMtvTzGjDRvb3GJ99CEUnX",
-    function: "processData",
-    args: [42, "metadata", { binary: base64Binary }],
-    payments: []
+    function: "mintNFT",
+    args: [
+      42,                           // Int
+      "My NFT",                     // String
+      { binary: base64Binary },     // ByteVector
+      { list: tags },               // List[String]
+      { list: [100, 200, 300] },    // List[Int]
+    ],
+    payments: [{ amount: 1000000 }]
   }),
 });
+
+const result = await response.json();
+if (result.ok) {
+  console.log("Transaction ID:", result.txId);
+}
 ```
 
 Replace addresses and method names with values present in your `dappConfig.json` and on-chain permissions.

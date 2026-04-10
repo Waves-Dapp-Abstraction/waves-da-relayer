@@ -11,19 +11,33 @@ const PaymentSchema = z.object({
     .optional(),
 });
 
+const BinaryArgSchema = z.object({
+  binary: z.string().regex(/^[A-Za-z0-9+/]*={0,2}$/, "binary must be a valid base64 string"),
+});
+
 /**
- * Args can be:
- * - number (integer)
- * - string (text)
- * - boolean (true/false)
- * - Binary data as object: { binary: "base64encodedstring" }
+ * Scalar arg: Int | String | Boolean | ByteVector
+ * ByteVector is encoded as { binary: "base64string" }
+ */
+const ScalarArgSchema = z.union([
+  z.number(),
+  z.string(),
+  z.boolean(),
+  BinaryArgSchema,
+]);
+
+/**
+ * Full arg: scalar or a List of scalars.
+ * Nested lists are not supported by the Waves protocol.
+ * List is encoded as { list: ScalarArg[] }
  */
 const ArgSchema = z.union([
   z.number(),
   z.string(),
   z.boolean(),
+  BinaryArgSchema,
   z.object({
-    binary: z.string().regex(/^[A-Za-z0-9+/]*={0,2}$/, "Invalid base64 encoding"),
+    list: z.array(ScalarArgSchema).max(300, "list arg cannot exceed 300 elements"),
   }),
 ]);
 
