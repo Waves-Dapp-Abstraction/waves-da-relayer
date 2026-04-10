@@ -11,10 +11,20 @@ const PaymentSchema = z.object({
     .optional(),
 });
 
+/**
+ * Args can be:
+ * - number (integer)
+ * - string (text)
+ * - boolean (true/false)
+ * - Binary data as object: { binary: "base64encodedstring" }
+ */
 const ArgSchema = z.union([
   z.number(),
   z.string(),
   z.boolean(),
+  z.object({
+    binary: z.string().regex(/^[A-Za-z0-9+/]*={0,2}$/, "Invalid base64 encoding"),
+  }),
 ]);
 
 export const InvokeRequestSchema = z.object({

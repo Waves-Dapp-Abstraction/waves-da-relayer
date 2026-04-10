@@ -241,7 +241,7 @@ Content-Type: application/json
 | `eoa` | string | Yes | User address (base58); must match the `eoa` in the token |
 | `targetDapp` | string | Yes | Target dApp address (must appear in `dappConfig.json`) |
 | `function` | string | Yes | Callable name (must be whitelisted for that dApp) |
-| `args` | array | No | Arguments: numbers, strings, or booleans only (default `[]`). Binary data (Uint8Array) is not supported via HTTP JSON; use the SDK directly with `buildDaInvokeTx()` to pass binary arguments. |
+| `args` | array | No | Arguments: numbers, strings, booleans, or binary data (default `[]`). Binary data must be encoded as `{ "binary": "base64encodeddata" }`. Example: `[1, "hello", true, { "binary": "SGVsbG8gV29ybGQ=" }]` |
 | `payments` | array | No | `{ "amount": number, "assetId"?: string }`, max **2** entries |
 
 The relayer does **not** accept client-controlled execution mode or fee settings: **`useVerifierMode` and `sponsorFee` come only from `dappConfig.json`.**
@@ -313,6 +313,31 @@ if (result.ok) {
 } else {
   console.error("Error:", result.code, result.error);
 }
+```
+
+#### Example: With binary arguments
+
+For methods that require binary data (e.g., hashes, keys, signatures), encode the data as base64:
+
+```js
+// Example: calling a function that expects (int, string, bytes)
+const binaryData = new Uint8Array([1, 2, 3, 4, 5]);
+const base64Binary = Buffer.from(binaryData).toString("base64");
+
+const response = await fetch("http://localhost:3000/invoke", {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    eoa: eoa,
+    targetDapp: "3N5peeTj1jpFnBMtvTzGjDRvb3GJ99CEUnX",
+    function: "processData",
+    args: [42, "metadata", { binary: base64Binary }],
+    payments: []
+  }),
+});
 ```
 
 Replace addresses and method names with values present in your `dappConfig.json` and on-chain permissions.
