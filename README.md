@@ -241,7 +241,7 @@ Content-Type: application/json
 | `eoa` | string | Yes | User address (base58); must match the `eoa` in the token |
 | `targetDapp` | string | Yes | Target dApp address (must appear in `dappConfig.json`) |
 | `function` | string | Yes | Callable name (must be whitelisted for that dApp) |
-| `args` | array | No | Arguments: numbers, strings, or booleans only (default `[]`). For binary args, use the SDK directly. |
+| `args` | array | No | Arguments: numbers, strings, or booleans only (default `[]`). Binary data (Uint8Array) is not supported via HTTP JSON; use the SDK directly with `buildDaInvokeTx()` to pass binary arguments. |
 | `payments` | array | No | `{ "amount": number, "assetId"?: string }`, max **2** entries |
 
 The relayer does **not** accept client-controlled execution mode or fee settings: **`useVerifierMode` and `sponsorFee` come only from `dappConfig.json`.**
