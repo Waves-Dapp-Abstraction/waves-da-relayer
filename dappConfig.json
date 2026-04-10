@@ -1,5 +1,8 @@
 {
   "3N5peeTj1jpFnBMtvTzGjDRvb3GJ99CEUnX": {
-    "recordIntStrBool": { "useVerifierMode": true, "sponsorFee": false }
+    "recordIntStrBool": { "useVerifierMode": true, "sponsorFee": false },
+    "recordWithList": { "useVerifierMode": true, "sponsorFee": false },
+    "recordWithIntList": { "useVerifierMode": true, "sponsorFee": false },
+    "recordBinary": { "useVerifierMode": true, "sponsorFee": false }
   }
 }
