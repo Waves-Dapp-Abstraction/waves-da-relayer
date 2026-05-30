@@ -3,6 +3,7 @@
     "recordIntStrBool": { "useVerifierMode": true, "sponsorFee": false },
     "recordWithList": { "useVerifierMode": true, "sponsorFee": false },
     "recordWithIntList": { "useVerifierMode": true, "sponsorFee": false },
-    "recordBinary": { "useVerifierMode": true, "sponsorFee": false }
+    "recordBinary": { "useVerifierMode": true, "sponsorFee": false },
+    "YYY6": { "useVerifierMode": true, "sponsorFee": false }
   }
 }

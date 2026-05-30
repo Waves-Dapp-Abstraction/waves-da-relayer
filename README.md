@@ -1,27 +1,34 @@
 # Relayer — Waves DA
 
-HTTP service that:
+HTTP service: resolve user DA from Registry → build `DA.proxy` → sign & broadcast.  
+Auth: challenge + JWT. Policy: **`dappConfig.json`** only (clients cannot pick REGULAR/VERIFIER).
 
-- resolves the user's **active DA** from the **Registry**
-- builds `DA.proxy(...)` transactions with **`waves-da-sdk`**
-- enforces **per–dApp / per–method** policy from **`dappConfig.json`** (REGULAR vs VERIFIER, fee sponsorship rules)
-- optionally runs a **refund guard** on REGULAR txs (trace validation via the node's `/debug/validate`)
-- **signs** with a configured relayer seed and **broadcasts** to the Waves node
-- **authenticates** EOAs via cryptographic signature verification (challenge-response + JWT tokens)
+**dApp integration guide:** [waves-da-docs QUICKSTART](https://github.com/Waves-Dapp-Abstraction/waves-da-docs/blob/master/QUICKSTART.md)
 
-> The relayer is suitable for development and testnet validation. Harden with rate limits, TLS, operational monitoring, and strong `JWT_SECRET` before any production deployment.
+Testnet-ready. Mainnet: [PRODUCTION.md](PRODUCTION.md) + [REGISTRY.md](https://github.com/Waves-Dapp-Abstraction/waves-da-docs/blob/master/REGISTRY.md).
+
+---
+
+## Quick start
+
+```bash
+npm install
+cp .env.example .env
+# REGISTRY_ADDRESS, RELAYER_SEED, JWT_SECRET
+# edit dappConfig.json — your dApp + methods
+npm start
+```
+
+| Check | URL |
+|-------|-----|
+| Health | `GET /health` |
+| Relayer pubkey (for `approveMethods`) | `GET /info` → `relayerPubKey` |
+
+Testnet defaults in `.env.example` (`CHAIN_ID=84`, registry `3MpHSUmakaCCcQkwATctWuChM6QkX3dBWAr`).
 
 ---
 
 ## Setup
-
-### Install
-
-```bash
-cd relayer
-npm install
-```
-
 
 ### Environment (`.env`)
 
@@ -34,11 +41,18 @@ Copy `relayer/.env.example` to `.env` and set:
 | `CHAIN_ID` | No | `84` testnet, `87` mainnet |
 | `REGISTRY_ADDRESS` | **Yes** | Registry dApp address (base58) |
 | `RELAYER_SEED` | **Yes** | Relayer account seed (signs invokes) |
-| `JWT_SECRET` | **Yes (prod)** | Secret for JWT token signatures. Use a strong random string (32+ chars) in production. Warnings logged if missing. |
+| `JWT_SECRET` | **Yes (prod)** | Secret for JWT (32+ chars when `PRODUCTION=true`) |
+| `PRODUCTION` | No | `true` enforces strong `JWT_SECRET` and `CORS_ORIGINS` |
+| `REDIS_URL` | No | Redis for auth challenges (recommended multi-instance prod) |
+| `CORS_ORIGINS` | **Yes (prod)** | Comma-separated allowed origins; unset = allow all (dev only) |
+| `RATE_LIMIT_MAX` | No | Requests per IP per window (default `100`) |
+| `RATE_LIMIT_WINDOW_MS` | No | Rate limit window ms (default `60000`) |
 | `FEE_REGULAR` | No | Fee in smallest units for REGULAR (default `500000`) |
 | `FEE_VERIFIER` | No | Fee for VERIFIER (default `900000`) |
 | `REFUND_GUARD_ENABLED` | No | Default **on**. Set to `false`, `0`, `no`, or `off` to skip `/debug/validate` checks (e.g. nodes without debug API) |
 | `DAPP_CONFIG_PATH` | No | Absolute or cwd-relative path to `dappConfig.json` (default `./dappConfig.json`) |
+
+Mainnet template: [`.env.mainnet.example`](.env.mainnet.example).
 
 The process exits on startup if `REGISTRY_ADDRESS` or `RELAYER_SEED` is missing.
 

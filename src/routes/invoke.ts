@@ -50,7 +50,7 @@ export async function registerInvokeRoute(app: FastifyInstance) {
       }
       return makeError(
         ErrorCode.METHOD_NOT_ALLOWED,
-        `Method "${body.function}" is not allowed on dApp "${body.targetDapp}"`
+        `Method "${body.function}" is not whitelisted by this relayer for dApp "${body.targetDapp}"`
       );
     }
 
