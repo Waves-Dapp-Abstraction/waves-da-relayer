@@ -11,6 +11,18 @@ Authentication prevents unauthorized users from impersonating others and making 
 3. **Verify**: Relayer verifies the signature and returns a JWT token
 4. **Request**: Client includes the token in subsequent requests via the `Authorization: Bearer {token}` header
 
+### Challenge storage (Redis optional)
+
+Nonces from `/auth/challenge` must be found again on `/auth/verify`:
+
+| Setup | Config | When |
+|-------|--------|------|
+| **Default** | no `REDIS_URL` | Single relayer process (dev, testnet, one server) — in-memory |
+| **Multi-instance** | `REDIS_URL=redis://host:6379` | Load balancer + several relayer pods |
+
+At startup the relayer logs either `Challenge store: in-memory` or `Challenge store: Redis`.  
+See [PRODUCTION.md](PRODUCTION.md) and `.env.example`.
+
 ## Authentication Flow
 
 ### Step 1: Get Challenge
