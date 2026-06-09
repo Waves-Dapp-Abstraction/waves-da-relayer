@@ -1,5 +1,7 @@
 # Relayer — Waves DA
 
+> **Beta — testnet only.** Early release for **Waves testnet** (`CHAIN_ID=84`) integration and evaluation. **Do not deploy on mainnet or use with real funds.** Use at your own risk.
+
 HTTP service: resolve user DA from Registry → build `DA.proxy` → sign & broadcast.  
 Auth: challenge + JWT. Policy: **`dappConfig.json`** only (clients cannot pick REGULAR/VERIFIER).
 
