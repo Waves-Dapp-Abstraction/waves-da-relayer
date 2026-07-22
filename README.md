@@ -1,13 +1,13 @@
 # Relayer — Waves DA
 
-> **Beta — testnet only.** Early release for **Waves testnet** (`CHAIN_ID=84`) integration and evaluation. **Do not deploy on mainnet or use with real funds.** Use at your own risk.
+> **Beta** — **testnet and mainnet** (`CHAIN_ID` `84` / `87`). Each dApp **self-hosts** its relayer. Contracts **not audited**. Mainnet uses real funds. Use at your own risk.
 
 HTTP service: resolve user DA from Registry → build `DA.proxy` → sign & broadcast.  
 Auth: challenge + JWT. Policy: **`dappConfig.json`** only (clients cannot pick REGULAR/VERIFIER).
 
 **dApp integration guide:** [waves-da-docs QUICKSTART](https://github.com/Waves-Dapp-Abstraction/waves-da-docs/blob/master/QUICKSTART.md)
 
-Testnet-ready. Mainnet: [PRODUCTION.md](PRODUCTION.md) + [REGISTRY.md](https://github.com/Waves-Dapp-Abstraction/waves-da-docs/blob/master/REGISTRY.md).
+**End users without a DA:** they can create and manage one at **[waves-da.com](https://waves-da.com/)** instead of your dApp building that UI. Your relayer + SDK flow is unchanged once the user has a DA and has `approveMethods` for your relayer.
 
 ---
 
