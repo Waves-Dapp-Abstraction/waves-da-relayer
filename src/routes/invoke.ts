@@ -2,7 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { address } from "@waves/ts-lib-crypto";
 import { buildDaInvokeTx } from "../services/da";
 import { broadcastTx } from "../services/broadcaster";
-import { validateRefundOrFail } from "../services/refundGuard";
+import {
+  buildRelayerLowWavesFailure,
+  fetchWavesBalance,
+  validateRefundOrFail,
+} from "../services/refundGuard";
 import { config } from "../config";
 import { dappConfig, getMethodConfig } from "../dappConfig";
 import { ErrorCode, makeError, RelayerError } from "../errors";
@@ -79,15 +83,37 @@ export async function registerInvokeRoute(app: FastifyInstance) {
       config.refundGuardEnabled
     ) {
       const relayerAddress = address(config.relayerSeed, config.chainId);
+      const txFee = Number((tx as { fee?: number }).fee ?? 0);
+
+      let relayerWavesBalance: number | undefined;
+      try {
+        relayerWavesBalance = await fetchWavesBalance(config.nodeUrl, relayerAddress);
+        if (relayerWavesBalance < txFee) {
+          const low = buildRelayerLowWavesFailure(
+            relayerAddress,
+            relayerWavesBalance,
+            txFee
+          );
+          reply.code(422);
+          return makeError(ErrorCode.REFUND_GUARD_FAILED, low.error, low.details);
+        }
+      } catch (e: unknown) {
+        request.log.warn(
+          { err: e, relayerAddress },
+          "Could not pre-check relayer WAVES balance; continuing with simulation"
+        );
+      }
+
       const guard = await validateRefundOrFail({
         nodeUrl: config.nodeUrl,
         tx: tx as Record<string, unknown>,
         relayerAddress,
+        relayerWavesBalance,
         expectRefund: true,
       });
       if (!guard.ok) {
         reply.code(422);
-        return makeError(ErrorCode.REFUND_GUARD_FAILED, guard.reason);
+        return makeError(ErrorCode.REFUND_GUARD_FAILED, guard.error, guard.details);
       }
     }
 

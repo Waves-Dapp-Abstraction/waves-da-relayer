@@ -29,3 +29,20 @@ The Waves node must expose **`/debug/validate`**. Most public testnet nodes do; 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `REFUND_GUARD_ENABLED` | `true` | Set to `false`, `0`, `no`, or `off` to skip `/debug/validate` (e.g. restricted node). |
+
+## Troubleshooting `REFUND_GUARD_FAILED`
+
+The relayer returns HTTP **422** with `code: "REFUND_GUARD_FAILED"` when REGULAR mode runs the refund guard and simulation fails or the expected refund transfer is missing.
+
+**Do not assume it is always a DA balance issue.** Check `details.subCode`:
+
+| `subCode` | What to do |
+|-----------|------------|
+| `RELAYER_LOW_WAVES` | Fund the **relayer** account with WAVES (fee payer in REGULAR). |
+| `DA_LOW_WAVES` | Deposit WAVES on the **DA** wallet (reimburse relayer fee). |
+| `DA_LOW_ASSET` | Deposit the required token on the **DA** (invoke payment). |
+| `DAPP_REJECTED` | Fix permissions, args, caps, or dApp logic — read `details.traceError`. |
+| `REFUND_TRACE_MISSING` | DA did not refund the relayer in simulation — check DA WAVES + `reimburseFee` behavior. |
+| `SIMULATION_FAILED` | Inspect `details.validateResponse` or node `/debug/validate` support. |
+
+Frontends should display `error` and/or `details.hint`, and may branch on `details.subCode`.

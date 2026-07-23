@@ -395,13 +395,59 @@ All codes are uppercase strings on `ErrorResponse.code`.
 | `VALIDATION_ERROR` | 400 | Body failed schema validation, malformed JSON, or auth missing |
 | `DAPP_NOT_WHITELISTED` | 403 | `targetDapp` not a key in `dappConfig.json` |
 | `METHOD_NOT_ALLOWED` | 403 | `function` not configured for that dApp |
-| `REFUND_GUARD_FAILED` | 422 | Trace validation did not show a fee refund to the relayer |
+| `REFUND_GUARD_FAILED` | 422 | REGULAR refund guard failed (simulation or missing refund in trace). Read **`details.subCode`** and **`details.hint`** — not always a DA funds issue. |
 | `DA_NOT_FOUND` | 422 | No active DA in the registry for `eoa` |
 | `BUILD_TX_FAILED` | 500 | Transaction build failed (unexpected) |
 | `BROADCAST_FAILED` | 502 | Node rejected or failed broadcast |
 | `INTERNAL_ERROR` | 500 | Unhandled server error |
 
 Implementation: `relayer/src/errors.ts`.
+
+### `REFUND_GUARD_FAILED` details
+
+When `code` is `REFUND_GUARD_FAILED`, the response includes structured `details`:
+
+| Field | Description |
+|-------|-------------|
+| `stage` | `precheck` \| `simulate` \| `refund_trace` |
+| `subCode` | See table below |
+| `reason` | Short machine-oriented reason |
+| `hint` | Actionable message for operators / frontends |
+| `relayerAddress` | Relayer account (fee payer in REGULAR) |
+| `relayerWavesBalance` | WAVES balance in wavelets (when known) |
+| `requiredFee` | Tx fee in wavelets |
+| `expectedRefund` | Present when refund missing from trace |
+| `traceSummary` | Transfers seen in simulation trace |
+| `traceError` | Last on-chain error extracted from trace |
+| `validateResponse` | Truncated `/debug/validate` payload |
+
+| `details.subCode` | Typical cause |
+|-------------------|----------------|
+| `RELAYER_LOW_WAVES` | Relayer account cannot pay the network fee — **fund the relayer** |
+| `DA_LOW_WAVES` | DA lacks WAVES to reimburse relayer fee or pay costs |
+| `DA_LOW_ASSET` | DA lacks token balance for invoke `payments` |
+| `DAPP_REJECTED` | Target dApp or DA permissions rejected the invoke |
+| `REFUND_TRACE_MISSING` | Simulation OK but no fee refund transfer to relayer in trace |
+| `SIMULATION_FAILED` | Unknown simulation failure — inspect `validateResponse` |
+
+Example:
+
+```json
+{
+  "ok": false,
+  "code": "REFUND_GUARD_FAILED",
+  "error": "Relayer account has insufficient WAVES to pay the network fee. Fund 3PBC… with at least 0.005 WAVES.",
+  "details": {
+    "stage": "precheck",
+    "subCode": "RELAYER_LOW_WAVES",
+    "reason": "relayer_waves_balance_below_tx_fee",
+    "hint": "Fund relayer 3PBC… with WAVES before retrying.",
+    "relayerAddress": "3PBC…",
+    "relayerWavesBalance": 0,
+    "requiredFee": 500000
+  }
+}
+```
 
 ---
 
